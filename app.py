@@ -1,69 +1,85 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 # Configuração básica
 st.set_page_config(page_title="Vellani - Valuation", layout="wide")
 st.title("💰 Vellani - Análise de Valuation")
 st.markdown("---")
 
-# Parâmetros
-SELIC = 0.15
-WACC = 0.1613  # Fixo por enquanto
-
-st.sidebar.title("⚙️ Configurações")
-st.sidebar.info(f"SELIC: {SELIC*100}% a.a.")
-st.sidebar.info(f"WACC: {WACC*100}%")
-
 # Carregar dados
 try:
-    # Tentar diferentes formas de ler o CSV
-    try:
-        df = pd.read_csv('data_frame.csv', encoding='utf-8', on_bad_lines='skip')
-    except:
-        df = pd.read_csv('data_frame.csv', encoding='latin-1', on_bad_lines='skip')
+    df = pd.read_csv('data_frame.csv', encoding='utf-8', on_bad_lines='skip')
     
-    st.success(f"✅ Dados carregados: {len(df)} empresas")
+    st.success(f"✅ Dados carregados com sucesso!")
     
-    # Seleção simples
-    ticker = st.selectbox("Selecione a empresa:", sorted(df['Ticker'].dropna().unique()))
-    
-    # Dados da empresa
-    dados = df[df['Ticker'] == ticker].iloc[0]
-    
-    # Valores básicos
-    ativo = float(dados.get('Ativo Total', 0) or 0)
-    ebitda = float(dados.get('Resultado Antes do Resultado Financeiro e dos Tributos', 0) or 0)
-    
-    # Cálculos diretos
-    roi = (ebitda / ativo) * 100 if ativo > 0 else 0
-    lucro_economico = ebitda - (WACC * ativo)
-    valor_mercado = lucro_economico / SELIC if SELIC > 0 else 0
-    
-    # Quantidade de ações (valor padrão editável)
-    qtd_acoes = st.number_input("Qtd. Ações (milhões):", value=1152.25, format="%.2f") * 1000000
-    
-    # Cotação esperada
-    cotacao_esperada = valor_mercado / qtd_acoes if qtd_acoes > 0 else 0
-    
-    # Resultados em colunas simples
+    # Informações básicas do dataset
     col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total de Empresas", len(df))
+    with col2:
+        st.metric("Tickers Únicos", df['Ticker'].nunique())
+    with col3:
+        st.metric("Colunas", len(df.columns))
+    
+    # Seleção de empresa
+    st.markdown("---")
+    st.subheader("🔍 Seleção de Empresa")
+    
+    tickers = sorted(df['Ticker'].dropna().unique())
+    selected_ticker = st.selectbox("Selecione uma empresa:", tickers)
+    
+    # Dados da empresa selecionada
+    empresa_data = df[df['Ticker'] == selected_ticker].iloc[0]
+    
+    st.subheader(f"📊 Dados da {selected_ticker}")
+    
+    # Mostrar apenas algumas colunas importantes
+    col1, col2 = st.columns(2)
     
     with col1:
-        st.metric("Ativo Total", f"R$ {ativo:,.0f}")
-        st.metric("EBITDA", f"R$ {ebitda:,.0f}")
-        st.metric("ROI", f"{roi:.1f}%")
+        st.write("**Dados Principais:**")
+        if 'Ativo Total' in df.columns:
+            st.write(f"Ativo Total: R$ {empresa_data['Ativo Total']:,.0f}")
+        if 'Receita de Venda de Bens e/ou Serviços' in df.columns:
+            st.write(f"Receita: R$ {empresa_data['Receita de Venda de Bens e/ou Serviços']:,.0f}")
+        if 'Lucro/Prejuízo Consolidado do Período' in df.columns:
+            st.write(f"Lucro: R$ {empresa_data['Lucro/Prejuízo Consolidado do Período']:,.0f}")
     
     with col2:
-        st.metric("WACC", f"{WACC*100:.1f}%")
-        st.metric("Lucro Econômico", f"R$ {lucro_economico:,.0f}")
-        st.metric("Valor de Mercado", f"R$ {valor_mercado:,.0f}")
+        st.write("**Outras Informações:**")
+        if 'Patrimônio Líquido Consolidado' in df.columns:
+            st.write(f"Patrimônio Líquido: R$ {empresa_data['Patrimônio Líquido Consolidado']:,.0f}")
+        if 'Resultado Antes do Resultado Financeiro e dos Tributos' in df.columns:
+            st.write(f"EBITDA: R$ {empresa_data['Resultado Antes do Resultado Financeiro e dos Tributos']:,.0f}")
     
-    with col3:
-        st.metric("SELIC", f"{SELIC*100}%")
-        st.metric("Qtd. Ações", f"{qtd_acoes:,.0f}")
-        st.success(f"**Cotação Esperada:** R$ {cotacao_esperada:.2f}")
+    # Botão para ver todos os dados
+    with st.expander("📋 Ver todos os dados desta empresa"):
+        st.write(empresa_data)
+    
+    # Botão para ver estrutura completa do dataset
+    with st.expander("🔧 Ver estrutura do dataset completo"):
+        st.write("**Colunas disponíveis:**")
+        st.write(df.columns.tolist())
+        st.write("**Primeiras 5 linhas:**")
+        st.dataframe(df.head())
 
 except Exception as e:
-    st.error(f"Erro: {e}")
-    st.info("Verifique se o arquivo 'data_frame.csv' está no repositório")
+    st.error(f"Erro ao carregar dados: {str(e)}")
+    
+    # Modo de emergência
+    st.info("""
+    **Se continuar com erro:**
+    1. Verifique se o arquivo CSV está correto
+    2. Confirme que a coluna 'Ticker' existe
+    3. Tente usar dados de exemplo abaixo
+    """)
+    
+    # Dados de exemplo
+    st.subheader("🧪 Dados de Exemplo")
+    exemplo_ticker = st.selectbox("Empresa exemplo:", ["PETR4", "VALE3", "ITUB4"])
+    
+    st.write(f"**Dados de exemplo para {exemplo_ticker}:**")
+    st.write("- Ativo Total: R$ 100.000.000")
+    st.write("- Receita: R$ 50.000.000") 
+    st.write("- Lucro: R$ 10.000.000")
+    st.write("- Patrimônio Líquido: R$ 60.000.000")
