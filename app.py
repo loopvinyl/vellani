@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 
 def main():
     st.set_page_config(
@@ -20,9 +21,49 @@ def main():
     st.sidebar.info(f"SELIC: {SELIC*100}% a.a.")
     st.sidebar.info(f"WACC: {WACC*100}%")
     
+    # Verificar se o arquivo existe
+    if not os.path.exists('data_frame.csv'):
+        st.error("❌ Arquivo 'data_frame.csv' não encontrado!")
+        st.info("""
+        **Para resolver:**
+        
+        1. **Converta o Excel para CSV:**
+           - Abra `data_frame.xlsx` no Excel
+           - Vá em **Arquivo > Salvar Como**
+           - Selecione **CSV (delimitado por vírgulas)**
+           - Salve como `data_frame.csv`
+        
+        2. **Faça upload para o GitHub:**
+           - Vá no seu repositório: https://github.com/loopvinyl/vellani
+           - Clique em **"Add file" → "Upload files"**
+           - Arraste o `data_frame.csv` para upload
+           - Commit das mudanças
+        
+        3. **Aguarde o Streamlit atualizar** (1-2 minutos)
+        """)
+        
+        # Mostrar arquivos existentes para debug
+        st.subheader("📁 Arquivos no repositório:")
+        try:
+            files = [f for f in os.listdir('.') if os.path.isfile(f)]
+            for file in files:
+                st.write(f"- {file}")
+        except:
+            st.write("Não foi possível listar os arquivos")
+        
+        return
+    
     # Carregar dados do CSV
     try:
-        df = pd.read_csv('data_frame.csv', encoding='utf-8', sep=',')
+        # Tentar diferentes encodings
+        try:
+            df = pd.read_csv('data_frame.csv', encoding='utf-8')
+        except:
+            try:
+                df = pd.read_csv('data_frame.csv', encoding='latin-1')
+            except:
+                df = pd.read_csv('data_frame.csv', encoding='utf-8-sig')
+        
         st.success(f"✅ Dados carregados: {len(df)} empresas encontradas")
         
         # Informações do dataset
@@ -33,6 +74,10 @@ def main():
             st.metric("Período", "2023-2024")
         with col3:
             st.metric("Dados Contábeis", f"{len(df.columns)} colunas")
+        
+        # Mostrar primeiras empresas
+        with st.expander("👀 Ver primeiras empresas"):
+            st.dataframe(df[['Ticker', 'Ativo Total', 'Receita de Venda de Bens e/ou Serviços']].head(10))
         
         # Seleção de empresa
         tickers = sorted(df['Ticker'].dropna().unique())
@@ -128,12 +173,7 @@ def main():
             
     except Exception as e:
         st.error(f"❌ Erro ao carregar os dados: {e}")
-        st.info("""
-        **Para resolver:**
-        1. Verifique se o arquivo 'data_frame.csv' está na raiz do repositório
-        2. Confirme que o arquivo foi salvo como CSV UTF-8
-        3. O nome do arquivo deve ser exatamente 'data_frame.csv'
-        """)
+        st.info("Verifique se o arquivo CSV foi gerado corretamente a partir do Excel.")
 
 if __name__ == "__main__":
     main()
