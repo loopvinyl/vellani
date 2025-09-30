@@ -6,12 +6,20 @@ st.set_page_config(page_title="Vellani - Valuation", layout="wide")
 st.title("💰 Vellani - Análise de Valuation")
 st.markdown("---")
 
+# SELIC global
+SELIC = 15.0  # % a.a.
+st.info(f"⚙️ SELIC: {SELIC}% a.a.")
+
 # Carregar dados
 try:
     df = pd.read_csv('data_frame.csv', encoding='utf-8', on_bad_lines='skip')
     
-    st.success(f"✅ Dados carregados com sucesso!")
+    # Checar se a coluna 'Ticker' existe
+    if 'Ticker' not in df.columns:
+        raise ValueError("Coluna 'Ticker' não encontrada no arquivo CSV.")
     
+    st.success(f"✅ Dados carregados com sucesso! ({len(df)} empresas)")
+
     # Informações básicas do dataset
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -33,7 +41,7 @@ try:
     
     st.subheader(f"📊 Dados da {selected_ticker}")
     
-    # Mostrar apenas algumas colunas importantes
+    # Mostrar algumas colunas importantes
     col1, col2 = st.columns(2)
     
     with col1:
@@ -52,11 +60,11 @@ try:
         if 'Resultado Antes do Resultado Financeiro e dos Tributos' in df.columns:
             st.write(f"EBITDA: R$ {empresa_data['Resultado Antes do Resultado Financeiro e dos Tributos']:,.0f}")
     
-    # Botão para ver todos os dados
+    # Expander para ver todos os dados
     with st.expander("📋 Ver todos os dados desta empresa"):
         st.write(empresa_data)
     
-    # Botão para ver estrutura completa do dataset
+    # Expander para estrutura do dataset
     with st.expander("🔧 Ver estrutura do dataset completo"):
         st.write("**Colunas disponíveis:**")
         st.write(df.columns.tolist())
