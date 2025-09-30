@@ -11,36 +11,27 @@ st.markdown("---")
 SELIC = 15.0  # % a.a.
 st.info(f"⚙️ SELIC: {SELIC}% a.a.")
 
-# Função para carregar arquivo CSV ou Excel
-def carregar_dados(arquivo):
-    if arquivo.endswith('.csv'):
-        df = pd.read_csv(arquivo, encoding='utf-8', on_bad_lines='skip')
-    elif arquivo.endswith('.xlsx'):
-        df = pd.read_excel(arquivo)
-    else:
-        raise ValueError("Formato de arquivo não suportado. Use CSV ou Excel.")
-    
-    # Limpar espaços extras nos nomes das colunas
+# Função para carregar arquivo Excel
+def carregar_dados_excel(arquivo):
+    df = pd.read_excel(arquivo)
+    # Remove espaços extras nos nomes das colunas
     df.rename(columns=lambda x: x.strip(), inplace=True)
     
-    # Verificar coluna 'Ticker'
+    # Checa se a coluna 'Ticker' existe
     if 'Ticker' not in df.columns:
-        raise ValueError("Coluna 'Ticker' não encontrada no arquivo.")
+        raise ValueError("Coluna 'Ticker' não encontrada no arquivo Excel.")
     
     return df
 
 # Caminho do arquivo
-arquivo_csv = 'data_frame.csv'
 arquivo_excel = 'data_frame.xlsx'
 
-# Tentar carregar CSV ou Excel
+# Tentar carregar o Excel
 try:
     if os.path.exists(arquivo_excel):
-        df = carregar_dados(arquivo_excel)
-    elif os.path.exists(arquivo_csv):
-        df = carregar_dados(arquivo_csv)
+        df = carregar_dados_excel(arquivo_excel)
     else:
-        raise FileNotFoundError("Nenhum arquivo encontrado. Certifique-se que CSV ou Excel esteja no diretório.")
+        raise FileNotFoundError("Arquivo Excel não encontrado. Certifique-se de que 'data_frame.xlsx' está no diretório.")
 
     st.success(f"✅ Dados carregados com sucesso! ({len(df)} empresas)")
 
@@ -98,7 +89,7 @@ except Exception as e:
     # Modo de emergência
     st.info("""
     **Se continuar com erro:**
-    1. Verifique se o arquivo Excel ou CSV está correto
+    1. Verifique se o arquivo Excel está correto
     2. Confirme que a coluna 'Ticker' existe
     3. Tente usar dados de exemplo abaixo
     """)
