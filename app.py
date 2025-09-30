@@ -20,10 +20,22 @@ def main():
     st.sidebar.info(f"SELIC: {SELIC*100}% a.a.")
     st.sidebar.info(f"WACC: {WACC*100}%")
     
-    # Tentar carregar dados do Excel
+    # Tentar carregar dados do Excel com diferentes métodos
     try:
-        df = pd.read_excel('data_frame.xlsx')
-        st.success(f"✅ Dados carregados: {len(df)} empresas encontradas")
+        # Método 1: Tentar com openpyxl
+        try:
+            df = pd.read_excel('data_frame.xlsx', engine='openpyxl')
+            st.success("✅ Dados carregados com openpyxl")
+        except:
+            # Método 2: Tentar sem engine específica
+            try:
+                df = pd.read_excel('data_frame.xlsx')
+                st.success("✅ Dados carregados com engine padrão")
+            except Exception as e:
+                st.error(f"❌ Não foi possível carregar o arquivo Excel: {e}")
+                return
+        
+        st.success(f"📊 {len(df)} empresas encontradas")
         
         # Informações do dataset
         col1, col2, col3 = st.columns(3)
@@ -33,6 +45,10 @@ def main():
             st.metric("Período", "2023-2024")
         with col3:
             st.metric("Dados Contábeis", f"{len(df.columns)} colunas")
+        
+        # Mostrar algumas colunas disponíveis
+        with st.expander("🔍 Ver colunas disponíveis"):
+            st.write(df.columns.tolist())
         
         # Seleção de empresa
         tickers = sorted(df['Ticker'].dropna().unique())
@@ -49,18 +65,22 @@ def main():
         
         with col1:
             ativo_total = empresa_data.get('Ativo Total', 0)
+            ativo_total = float(ativo_total) if pd.notna(ativo_total) else 0
             st.metric("Ativo Total", f"R$ {ativo_total:,.0f}")
         
         with col2:
             receita = empresa_data.get('Receita de Venda de Bens e/ou Serviços', 0)
+            receita = float(receita) if pd.notna(receita) else 0
             st.metric("Receita", f"R$ {receita:,.0f}")
         
         with col3:
             lucro = empresa_data.get('Lucro/Prejuízo Consolidado do Período', 0)
+            lucro = float(lucro) if pd.notna(lucro) else 0
             st.metric("Lucro", f"R$ {lucro:,.0f}")
         
         with col4:
             pl = empresa_data.get('Patrimônio Líquido Consolidado', 0)
+            pl = float(pl) if pd.notna(pl) else 0
             st.metric("Patrimônio Líquido", f"R$ {pl:,.0f}")
         
         st.markdown("---")
@@ -69,6 +89,7 @@ def main():
         # Cálculos de valuation
         investimento_medio = ativo_total
         ebitda = empresa_data.get('Resultado Antes do Resultado Financeiro e dos Tributos', 0)
+        ebitda = float(ebitda) if pd.notna(ebitda) else 0
         
         # ROI
         roi = (ebitda / investimento_medio) * 100 if investimento_medio > 0 else 0
@@ -79,14 +100,14 @@ def main():
         lucro_economico = (lucro_economico_1 + lucro_economico_2) / 2
         
         # Valor de Mercado
-        valor_mercado = lucro_economico / SELIC
+        valor_mercado = lucro_economico / SELIC if SELIC > 0 else 0
         
-        # Quantidade de ações (exemplo - ajustar conforme necessário)
+        # Quantidade de ações
         qtd_acoes = st.number_input(
             "Quantidade de Ações (em milhões):", 
-            value=1152.25,  # Exemplo: 1.152.254.440 ações
+            value=1152.25,
             format="%.2f"
-        ) * 1000000  # Converter para quantidade real
+        ) * 1000000
         
         # Cotação Esperada
         cotacao_esperada = valor_mercado / qtd_acoes if qtd_acoes > 0 else 0
@@ -122,12 +143,12 @@ def main():
             """)
             
     except Exception as e:
-        st.error(f"❌ Erro ao carregar os dados: {e}")
+        st.error(f"❌ Erro: {e}")
         st.info("""
-        **Para resolver:**
-        1. Verifique se o arquivo 'data_frame.xlsx' está na raiz do repositório
+        **Soluções:**
+        1. Verifique se 'data_frame.xlsx' está na raiz
         2. Confirme que o arquivo não está corrompido
-        3. O nome do arquivo deve ser exatamente 'data_frame.xlsx'
+        3. Tente converter para CSV e usar pd.read_csv()
         """)
 
 if __name__ == "__main__":
