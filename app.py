@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
+import os
 
 # Configuração básica
-st.set_page_config(page_title="Vellani - Valuation", layout="wide")
+st.set_page_config(page_title="💰 Vellani - Valuation", layout="wide")
 st.title("💰 Vellani - Análise de Valuation")
 st.markdown("---")
 
@@ -10,17 +11,37 @@ st.markdown("---")
 SELIC = 15.0  # % a.a.
 st.info(f"⚙️ SELIC: {SELIC}% a.a.")
 
-# Carregar dados do Excel
-try:
-    df = pd.read_excel('data_frame.xlsx')  # <- aqui mudou
-
-    # Remover espaços extras em nomes de colunas
+# Função para carregar arquivo CSV ou Excel
+def carregar_dados(arquivo):
+    if arquivo.endswith('.csv'):
+        df = pd.read_csv(arquivo, encoding='utf-8', on_bad_lines='skip')
+    elif arquivo.endswith('.xlsx'):
+        df = pd.read_excel(arquivo)
+    else:
+        raise ValueError("Formato de arquivo não suportado. Use CSV ou Excel.")
+    
+    # Limpar espaços extras nos nomes das colunas
     df.rename(columns=lambda x: x.strip(), inplace=True)
     
-    # Checar se a coluna 'Ticker' existe
+    # Verificar coluna 'Ticker'
     if 'Ticker' not in df.columns:
-        raise ValueError("Coluna 'Ticker' não encontrada no arquivo Excel.")
+        raise ValueError("Coluna 'Ticker' não encontrada no arquivo.")
     
+    return df
+
+# Caminho do arquivo
+arquivo_csv = 'data_frame.csv'
+arquivo_excel = 'data_frame.xlsx'
+
+# Tentar carregar CSV ou Excel
+try:
+    if os.path.exists(arquivo_excel):
+        df = carregar_dados(arquivo_excel)
+    elif os.path.exists(arquivo_csv):
+        df = carregar_dados(arquivo_csv)
+    else:
+        raise FileNotFoundError("Nenhum arquivo encontrado. Certifique-se que CSV ou Excel esteja no diretório.")
+
     st.success(f"✅ Dados carregados com sucesso! ({len(df)} empresas)")
 
     # Informações básicas do dataset
@@ -35,18 +56,15 @@ try:
     # Seleção de empresa
     st.markdown("---")
     st.subheader("🔍 Seleção de Empresa")
-    
     tickers = sorted(df['Ticker'].dropna().unique())
     selected_ticker = st.selectbox("Selecione uma empresa:", tickers)
     
     # Dados da empresa selecionada
     empresa_data = df[df['Ticker'] == selected_ticker].iloc[0]
-    
     st.subheader(f"📊 Dados da {selected_ticker}")
     
     # Mostrar algumas colunas importantes
     col1, col2 = st.columns(2)
-    
     with col1:
         st.write("**Dados Principais:**")
         if 'Ativo Total' in df.columns:
@@ -80,7 +98,7 @@ except Exception as e:
     # Modo de emergência
     st.info("""
     **Se continuar com erro:**
-    1. Verifique se o arquivo Excel está correto
+    1. Verifique se o arquivo Excel ou CSV está correto
     2. Confirme que a coluna 'Ticker' existe
     3. Tente usar dados de exemplo abaixo
     """)
