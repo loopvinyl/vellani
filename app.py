@@ -10,13 +10,16 @@ st.markdown("---")
 SELIC = 15.0  # % a.a.
 st.info(f"⚙️ SELIC: {SELIC}% a.a.")
 
-# Carregar dados
+# Carregar dados do Excel
 try:
-    df = pd.read_csv('data_frame.csv', encoding='utf-8', on_bad_lines='skip')
+    df = pd.read_excel('data_frame.xlsx')  # <- aqui mudou
+
+    # Remover espaços extras em nomes de colunas
+    df.rename(columns=lambda x: x.strip(), inplace=True)
     
     # Checar se a coluna 'Ticker' existe
     if 'Ticker' not in df.columns:
-        raise ValueError("Coluna 'Ticker' não encontrada no arquivo CSV.")
+        raise ValueError("Coluna 'Ticker' não encontrada no arquivo Excel.")
     
     st.success(f"✅ Dados carregados com sucesso! ({len(df)} empresas)")
 
@@ -77,7 +80,7 @@ except Exception as e:
     # Modo de emergência
     st.info("""
     **Se continuar com erro:**
-    1. Verifique se o arquivo CSV está correto
+    1. Verifique se o arquivo Excel está correto
     2. Confirme que a coluna 'Ticker' existe
     3. Tente usar dados de exemplo abaixo
     """)
