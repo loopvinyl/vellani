@@ -20,22 +20,10 @@ def main():
     st.sidebar.info(f"SELIC: {SELIC*100}% a.a.")
     st.sidebar.info(f"WACC: {WACC*100}%")
     
-    # Tentar carregar dados do Excel com diferentes métodos
+    # Carregar dados do CSV
     try:
-        # Método 1: Tentar com openpyxl
-        try:
-            df = pd.read_excel('data_frame.xlsx', engine='openpyxl')
-            st.success("✅ Dados carregados com openpyxl")
-        except:
-            # Método 2: Tentar sem engine específica
-            try:
-                df = pd.read_excel('data_frame.xlsx')
-                st.success("✅ Dados carregados com engine padrão")
-            except Exception as e:
-                st.error(f"❌ Não foi possível carregar o arquivo Excel: {e}")
-                return
-        
-        st.success(f"📊 {len(df)} empresas encontradas")
+        df = pd.read_csv('data_frame.csv', encoding='utf-8', sep=',')
+        st.success(f"✅ Dados carregados: {len(df)} empresas encontradas")
         
         # Informações do dataset
         col1, col2, col3 = st.columns(3)
@@ -45,10 +33,6 @@ def main():
             st.metric("Período", "2023-2024")
         with col3:
             st.metric("Dados Contábeis", f"{len(df.columns)} colunas")
-        
-        # Mostrar algumas colunas disponíveis
-        with st.expander("🔍 Ver colunas disponíveis"):
-            st.write(df.columns.tolist())
         
         # Seleção de empresa
         tickers = sorted(df['Ticker'].dropna().unique())
@@ -143,12 +127,12 @@ def main():
             """)
             
     except Exception as e:
-        st.error(f"❌ Erro: {e}")
+        st.error(f"❌ Erro ao carregar os dados: {e}")
         st.info("""
-        **Soluções:**
-        1. Verifique se 'data_frame.xlsx' está na raiz
-        2. Confirme que o arquivo não está corrompido
-        3. Tente converter para CSV e usar pd.read_csv()
+        **Para resolver:**
+        1. Verifique se o arquivo 'data_frame.csv' está na raiz do repositório
+        2. Confirme que o arquivo foi salvo como CSV UTF-8
+        3. O nome do arquivo deve ser exatamente 'data_frame.csv'
         """)
 
 if __name__ == "__main__":
