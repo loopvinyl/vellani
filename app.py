@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import os
 
-# Configuração básica
 st.set_page_config(page_title="💰 Vellani - Valuation", layout="wide")
 st.title("💰 Vellani - Análise de Valuation")
 st.markdown("---")
@@ -11,27 +10,44 @@ st.markdown("---")
 SELIC = 15.0  # % a.a.
 st.info(f"⚙️ SELIC: {SELIC}% a.a.")
 
-# Função para carregar arquivo Excel
-def carregar_dados_excel(arquivo):
-    df = pd.read_excel(arquivo)
-    # Remove espaços extras nos nomes das colunas
-    df.rename(columns=lambda x: x.strip(), inplace=True)
-    
-    # Checa se a coluna 'Ticker' existe
-    if 'Ticker' not in df.columns:
-        raise ValueError("Coluna 'Ticker' não encontrada no arquivo Excel.")
-    
-    return df
+def carregar_dados(arquivo):
+    """Tenta ler Excel ou CSV automaticamente."""
+    try:
+        if arquivo.endswith('.xlsx'):
+            try:
+                df = pd.read_excel(arquivo)
+            except ImportError:
+                raise ImportError("openpyxl não está instalado. Instale com `pip install openpyxl`.")
+        elif arquivo.endswith('.csv'):
+            df = pd.read_csv(arquivo, encoding='utf-8', on_bad_lines='skip')
+        else:
+            raise ValueError("Formato de arquivo não suportado. Use CSV ou Excel.")
+        
+        # Limpar espaços nos nomes das colunas
+        df.rename(columns=lambda x: x.strip(), inplace=True)
+        
+        if 'Ticker' not in df.columns:
+            raise ValueError("Coluna 'Ticker' não encontrada no arquivo.")
+        
+        return df
+    except ImportError as ie:
+        st.error(str(ie))
+        st.stop()
+    except Exception as e:
+        st.error(f"Erro ao carregar arquivo: {e}")
+        st.stop()
 
-# Caminho do arquivo
+# Caminhos dos arquivos possíveis
 arquivo_excel = 'data_frame.xlsx'
+arquivo_csv = 'data_frame.csv'
 
-# Tentar carregar o Excel
 try:
     if os.path.exists(arquivo_excel):
-        df = carregar_dados_excel(arquivo_excel)
+        df = carregar_dados(arquivo_excel)
+    elif os.path.exists(arquivo_csv):
+        df = carregar_dados(arquivo_csv)
     else:
-        raise FileNotFoundError("Arquivo Excel não encontrado. Certifique-se de que 'data_frame.xlsx' está no diretório.")
+        raise FileNotFoundError("Nenhum arquivo encontrado. Certifique-se que CSV ou Excel esteja no diretório.")
 
     st.success(f"✅ Dados carregados com sucesso! ({len(df)} empresas)")
 
@@ -54,7 +70,6 @@ try:
     empresa_data = df[df['Ticker'] == selected_ticker].iloc[0]
     st.subheader(f"📊 Dados da {selected_ticker}")
     
-    # Mostrar algumas colunas importantes
     col1, col2 = st.columns(2)
     with col1:
         st.write("**Dados Principais:**")
@@ -64,7 +79,6 @@ try:
             st.write(f"Receita: R$ {empresa_data['Receita de Venda de Bens e/ou Serviços']:,.0f}")
         if 'Lucro/Prejuízo Consolidado do Período' in df.columns:
             st.write(f"Lucro: R$ {empresa_data['Lucro/Prejuízo Consolidado do Período']:,.0f}")
-    
     with col2:
         st.write("**Outras Informações:**")
         if 'Patrimônio Líquido Consolidado' in df.columns:
@@ -86,15 +100,13 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar dados: {str(e)}")
     
-    # Modo de emergência
     st.info("""
     **Se continuar com erro:**
-    1. Verifique se o arquivo Excel está correto
+    1. Verifique se o arquivo Excel ou CSV está correto
     2. Confirme que a coluna 'Ticker' existe
     3. Tente usar dados de exemplo abaixo
     """)
     
-    # Dados de exemplo
     st.subheader("🧪 Dados de Exemplo")
     exemplo_ticker = st.selectbox("Empresa exemplo:", ["PETR4", "VALE3", "ITUB4"])
     
