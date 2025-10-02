@@ -1,54 +1,69 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
 
-# Configuração básica
-st.set_page_config(page_title="Vellani - Valuation", layout="wide")
-st.title("💰 Vellani - Análise de Valuation")
-st.markdown("---")
+# Configuração da página
+st.set_page_config(
+    page_title="Análise Financeira - Indicadores Contábeis",
+    page_icon="📊",
+    layout="wide"
+)
 
-# Carregar dados do Excel (igual ao script que funcionou)
-try:
-    df = pd.read_excel('data_frame.xlsx')  # Mesma sintaxe que funcionou
-    
-    st.success(f"✅ Dados carregados: {len(df)} empresas")
-    
-    # Mostrar informações básicas
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total de Empresas", len(df))
-    with col2:
-        st.metric("Tickers Únicos", df['Ticker'].nunique())
-    with col3:
-        st.metric("Colunas", len(df.columns))
-    
-    # Mostrar primeiros dados
-    st.markdown("---")
-    st.subheader("📋 Primeiras Empresas no Dataset")
-    st.dataframe(df[['Ticker', 'Ativo Total', 'Receita de Venda de Bens e/ou Serviços']].head(10))
-    
-    # Seleção de empresa
-    st.markdown("---")
-    st.subheader("🔍 Análise por Empresa")
-    
-    tickers = sorted(df['Ticker'].dropna().unique())
-    selected_ticker = st.selectbox("Selecione uma empresa:", tickers)
-    
-    # Dados da empresa selecionada
-    empresa_data = df[df['Ticker'] == selected_ticker].iloc[0]
-    
-    # Mostrar dados básicos
-    st.write(f"**Dados da {selected_ticker}:**")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.metric("Ativo Total", f"R$ {empresa_data['Ativo Total']:,.0f}")
-        st.metric("Receita", f"R$ {empresa_data['Receita de Venda de Bens e/ou Serviços']:,.0f}")
-    
-    with col2:
-        st.metric("Lucro", f"R$ {empresa_data['Lucro/Prejuízo Consolidado do Período']:,.0f}")
-        st.metric("Patrimônio Líquido", f"R$ {empresa_data['Patrimônio Líquido Consolidado']:,.0f}")
+# Título principal
+st.title("📊 Dashboard de Análise Financeira - CVM")
+st.markdown("Análise completa de indicadores financeiros baseada nas demonstrações contábeis")
 
-except Exception as e:
-    st.error(f"Erro: {str(e)}")
-    st.info("Verifique se o arquivo 'data_frame.xlsx' está na raiz do repositório")
+# Carregar dados
+@st.cache_data
+def load_data():
+    df = pd.read_excel('data_frame.xlsx')
+    return df
+
+# Carregar e processar dados
+df = load_data()
+
+# Sidebar com filtros
+st.sidebar.header("Filtros")
+empresas = st.sidebar.multiselect("Selecione as Empresas", options=df['Nome Empresa'].unique())
+anos = st.sidebar.multiselect("Selecione os Anos", options=df['Ano'].unique())
+
+# Aplicar filtros
+if empresas:
+    df = df[df['Nome Empresa'].isin(empresas)]
+if anos:
+    df = df[df['Ano'].isin(anos)]
+
+# Calcular todos os indicadores
+# (Aqui implementaríamos as fórmulas acima)
+
+# Layout do dashboard
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📈 Visão Geral", 
+    "💰 Rentabilidade", 
+    "🏦 Liquidez", 
+    "📊 Endividamento", 
+    "📋 Detalhes"
+])
+
+with tab1:
+    st.header("Indicadores Principais")
+    # Gráficos e métricas principais
+
+with tab2:
+    st.header("Análise de Rentabilidade")
+    # Indicadores de rentabilidade
+
+with tab3:
+    st.header("Análise de Liquidez")
+    # Indicadores de liquidez
+
+with tab4:
+    st.header("Análise de Endividamento")
+    # Indicadores de endividamento
+
+with tab5:
+    st.header("Dados Detalhados")
+    st.dataframe(df)
