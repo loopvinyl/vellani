@@ -20,7 +20,7 @@ st.markdown("Indicadores financeiros das empresas brasileiras - Ano base 2024")
 def load_data():
     """Carrega e processa os dados para 2024"""
     try:
-        df = pd.read_csv('data_frame.xlsx - Sheet1.csv')
+        df = pd.read_excel('data_frame.xlsx - Sheet1.csv')
         
         # Filtrar apenas 2024
         df_2024 = df[df['Ano'] == 2024].copy()
