@@ -1,6 +1,20 @@
+# Bibliotecas core
 streamlit==1.28.2
 pandas==2.1.4
-plotly==5.17.0
-openpyxl==3.1.2
 numpy==1.24.3
+
+# Visualização
+plotly==5.17.0
+altair==5.2.0
+
+# Leitura de Excel
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# Requisições web
 requests==2.31.0
+urllib3==2.0.7
+
+# Utilitários
+python-dateutil==2.8.2
+pytz==2023.3
